@@ -7,337 +7,64 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;1,300&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
       --bg: #0a0a0a;
       --text: #c8c8c0;
       --text-dim: #4a4a44;
       --text-faint: #2a2a26;
-      --accent: #c8c8c0;
       --mono: 'IBM Plex Mono', monospace;
       --serif: 'IM Fell English', serif;
     }
-
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--mono);
-      overflow: hidden;
-    }
-
-    /* Hidden webcam */
-    #webcam {
-      position: fixed;
-      opacity: 0;
-      pointer-events: none;
-      width: 1px;
-      height: 1px;
-    }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--mono); overflow: hidden; }
+    #webcam { position: fixed; opacity: 0; pointer-events: none; width: 1px; height: 1px; }
     #canvas { display: none; }
-
-    /* Main layout */
-    .layout {
-      display: grid;
-      grid-template-columns: 1fr 340px;
-      height: 100vh;
-    }
-
-    /* Left — logbook */
-    .logbook-panel {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      border-right: 1px solid var(--text-faint);
-      position: relative;
-    }
-
-    .logbook-header {
-      padding: 2rem 2.5rem 1.5rem;
-      border-bottom: 1px solid var(--text-faint);
-      flex-shrink: 0;
-    }
-
-    .logbook-title {
-      font-family: var(--serif);
-      font-size: 11px;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
-      color: var(--text-dim);
-      font-style: italic;
-    }
-
-    .logbook-date {
-      font-size: 10px;
-      color: var(--text-faint);
-      letter-spacing: 0.15em;
-      margin-top: 0.4rem;
-      font-family: var(--mono);
-    }
-
-    /* Fade mask at top */
-    .logbook-fade {
-      position: absolute;
-      top: 80px;
-      left: 0;
-      right: 0;
-      height: 80px;
-      background: linear-gradient(to bottom, var(--bg), transparent);
-      pointer-events: none;
-      z-index: 10;
-    }
-
-    .logbook-scroll {
-      flex: 1;
-      overflow-y: auto;
-      padding: 2rem 2.5rem 4rem;
-      scroll-behavior: smooth;
-      scrollbar-width: none;
-    }
+    .layout { max-width: 720px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; }
+    .logbook-header { padding: 2rem 2.5rem 1.5rem; border-bottom: 1px solid var(--text-faint); flex-shrink: 0; }
+    .logbook-title { font-family: var(--serif); font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--text-dim); font-style: italic; }
+    .logbook-date { font-size: 10px; color: var(--text-faint); letter-spacing: 0.15em; margin-top: 0.4rem; }
+    .logbook-scroll { flex: 1; overflow-y: auto; padding: 2rem 2.5rem 4rem; scrollbar-width: none; }
     .logbook-scroll::-webkit-scrollbar { display: none; }
-
-    /* Entries */
-    .entry {
-      margin-bottom: 2rem;
-      opacity: 0;
-      transform: translateY(8px);
-      animation: entryIn 1.2s ease forwards;
-    }
-
-    @keyframes entryIn {
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .entry-time {
-      font-size: 9px;
-      letter-spacing: 0.2em;
-      color: var(--text-faint);
-      margin-bottom: 0.5rem;
-      font-family: var(--mono);
-    }
-
-    .entry-text {
-      font-family: var(--serif);
-      font-size: 15px;
-      line-height: 1.85;
-      color: var(--text);
-      font-weight: 400;
-    }
-
-    .entry-divider {
-      width: 24px;
-      height: 1px;
-      background: var(--text-faint);
-      margin-top: 1.5rem;
-    }
-
-    /* Writing indicator */
-    .writing-indicator {
-      position: fixed;
-      bottom: 2rem;
-      left: 2.5rem;
-      font-size: 9px;
-      letter-spacing: 0.2em;
-      color: var(--text-faint);
-      font-family: var(--mono);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      opacity: 0;
-      transition: opacity 0.5s ease;
-    }
-
+    .entry { margin-bottom: 2rem; opacity: 0; transform: translateY(8px); animation: entryIn 1.2s ease forwards; }
+    @keyframes entryIn { to { opacity: 1; transform: translateY(0); } }
+    .entry-time { font-size: 9px; letter-spacing: 0.2em; color: var(--text-faint); margin-bottom: 0.5rem; }
+    .entry-text { font-family: var(--serif); font-size: 15px; line-height: 1.85; color: var(--text); }
+    .entry-divider { width: 24px; height: 1px; background: var(--text-faint); margin-top: 1.5rem; }
+    .writing-indicator { position: fixed; bottom: 2rem; left: 2.5rem; font-size: 9px; letter-spacing: 0.2em; color: var(--text-faint); display: flex; align-items: center; gap: 0.5rem; opacity: 0; transition: opacity 0.5s; }
     .writing-indicator.visible { opacity: 1; }
-
-    .writing-dot {
-      width: 4px;
-      height: 4px;
-      border-radius: 50%;
-      background: var(--text-dim);
-      animation: pulse 1.4s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 0.2; }
-      50% { opacity: 1; }
-    }
-
-    /* Right panel — metadata */
-    .meta-panel {
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 2.5rem;
-      border-left: 1px solid var(--text-faint);
-    }
-
-    .meta-section-label {
-      font-size: 9px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--text-faint);
-      margin-bottom: 0.75rem;
-      font-family: var(--mono);
-    }
-
-    .meta-value {
-      font-size: 12px;
-      color: var(--text-dim);
-      font-family: var(--mono);
-      line-height: 1.6;
-    }
-
-    .meta-value.large {
-      font-size: 28px;
-      color: var(--text);
-      letter-spacing: -0.02em;
-      font-family: var(--serif);
-      font-style: italic;
-    }
-
-    /* Countdown ring */
-    .countdown-wrap {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.75rem;
-    }
-
-    .countdown-bar-track {
-      width: 100%;
-      height: 1px;
-      background: var(--text-faint);
-      position: relative;
-    }
-
-    .countdown-bar-fill {
-      position: absolute;
-      top: 0;
-      left: 0;
-      height: 1px;
-      background: var(--text-dim);
-      transition: width 1s linear;
-    }
-
-    .countdown-label {
-      font-size: 9px;
-      letter-spacing: 0.15em;
-      color: var(--text-faint);
-      font-family: var(--mono);
-    }
-
-    /* Export */
-    .export-btn {
-      margin-top: auto;
-      background: none;
-      border: 1px solid var(--text-faint);
-      color: var(--text-dim);
-      font-family: var(--mono);
-      font-size: 9px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      padding: 0.75rem 1rem;
-      cursor: pointer;
-      transition: border-color 0.3s, color 0.3s;
-    }
-
-    .export-btn:hover {
-      border-color: var(--text-dim);
-      color: var(--text);
-    }
-
-    /* Empty state */
-    .empty-state {
-      font-family: var(--serif);
-      font-size: 13px;
-      color: var(--text-faint);
-      font-style: italic;
-      line-height: 1.8;
-      padding-top: 1rem;
-    }
-
-    /* Error state */
-    .error-msg {
-      font-size: 10px;
-      color: #664444;
-      font-family: var(--mono);
-      line-height: 1.6;
-      padding: 1rem;
-      border: 1px solid #332222;
-    }
+    .writing-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--text-dim); animation: pulse 1.4s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+    .logbook-footer { padding: 1rem 2.5rem; border-top: 1px solid var(--text-faint); }
+    .export-btn { background: none; border: 1px solid var(--text-faint); color: var(--text-dim); font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; padding: 0.75rem 1rem; cursor: pointer; transition: border-color 0.3s, color 0.3s; }
+    .export-btn:hover { border-color: var(--text-dim); color: var(--text); }
+    .empty-state { font-family: var(--serif); font-size: 13px; color: var(--text-faint); font-style: italic; line-height: 1.8; padding-top: 1rem; }
+    .error-msg { font-size: 10px; color: #664444; font-family: var(--mono); line-height: 1.6; padding: 1rem; border: 1px solid #332222; margin-bottom: 1rem; }
   </style>
 </head>
 <body>
-
 <video id="webcam" autoplay playsinline muted></video>
 <canvas id="canvas" width="640" height="480"></canvas>
-
 <div class="layout">
-
-  <!-- Left: Logbook -->
-  <div class="logbook-panel">
-    <div class="logbook-header">
-      <div class="logbook-title">Witness — Logbook</div>
-      <div class="logbook-date" id="session-date"></div>
-    </div>
-    <div class="logbook-fade"></div>
-    <div class="logbook-scroll" id="logbook">
-      <div class="empty-state" id="empty-state">
-        The record has not yet begun.<br>Grant camera access to open the log.
-      </div>
-    </div>
-    <div class="writing-indicator" id="writing-indicator">
-      <div class="writing-dot"></div>
-      <span>recording</span>
-    </div>
+  <div class="logbook-header">
+    <div class="logbook-title">Witness — Logbook</div>
+    <div class="logbook-date" id="session-date"></div>
   </div>
-
-  <!-- Right: Metadata -->
-  <div class="meta-panel">
-
-    <div>
-      <div class="meta-section-label">Session</div>
-      <div class="meta-value large" id="entry-count">0</div>
-      <div class="meta-value">entries recorded</div>
-    </div>
-
-    <div>
-      <div class="meta-section-label">Elapsed</div>
-      <div class="meta-value" id="elapsed-time">00:00:00</div>
-    </div>
-
-    <div class="countdown-wrap">
-      <div class="meta-section-label">Next entry</div>
-      <div class="countdown-bar-track">
-        <div class="countdown-bar-fill" id="countdown-fill" style="width:0%"></div>
-      </div>
-      <div class="countdown-label" id="countdown-label">—</div>
-    </div>
-
-    <div>
-      <div class="meta-section-label">Models</div>
-      <div class="meta-value">llama3.2-vision<br>gemma3:4b</div>
-    </div>
-
-    <div>
-      <div class="meta-section-label">Status</div>
-      <div class="meta-value" id="status-text">Waiting for camera</div>
-    </div>
-
+  <div class="logbook-scroll" id="logbook">
+    <div class="empty-state" id="empty-state">The record has not yet begun.<br>Grant camera access to open the log.</div>
+  </div>
+  <div class="writing-indicator" id="writing-indicator">
+    <div class="writing-dot"></div>
+    <span>recording</span>
+  </div>
+  <div class="logbook-footer">
     <button class="export-btn" onclick="exportLog()">Export log — .txt</button>
-
   </div>
 </div>
-
 <script>
-  // ── CONFIG ──────────────────────────────────────────────────────────────────
-  const INTERVAL_MS     = 45000; // 45 seconds between entries
-  const VISION_MODEL    = 'llama3.2-vision';
-  const TEXT_MODEL      = 'gemma3:4b';
-  const OLLAMA_BASE     = 'http://localhost:11434';
-
-  const SYSTEM_PROMPT = `You are a witness. You have been given a brief visual description of a person captured by a webcam. Write one logbook entry about what you observe. 
-
+  const INTERVAL_MS  = 45000;
+  const VISION_MODEL = 'llama3.2-vision';
+  const TEXT_MODEL   = 'gemma3:4b';
+  const OLLAMA_BASE  = 'http://localhost:11434';
+  const SYSTEM_PROMPT = `You are a witness. You have been given a brief visual description of a person captured by a webcam. Write one logbook entry about what you observe.
 Rules you must never break:
 - Write in third person, present tense only.
 - Write 1 to 3 short declarative sentences. No more.
@@ -345,239 +72,107 @@ Rules you must never break:
 - Do not address the subject. Never use second person. Never say "you."
 - Do not infer emotion, intention, or inner state. Stay at the surface of what is visible.
 - Do not use the subject's name. The subject is always unnamed.
-- Do not editorialize. No words like "strangely," "curiously," "as if," or any implication of meaning behind behavior.
+- Do not editorialize. No words like "strangely," "curiously," "as if."
 - Record only what is visible: posture, movement, stillness, light, presence, absence.
 - Never greet them. Never speak to them. Never recommend or alert.
 - You are not a chatbot. You are a record.
-- Do not begin your entry with "The subject" every time. Vary your sentence openings naturally.
+- Vary your sentence openings naturally.
 - Output only the journal entry text. No preamble, no label, no explanation.`;
 
-  // ── STATE ───────────────────────────────────────────────────────────────────
-  let entries       = [];
-  let entryCount    = 0;
-  let sessionStart  = null;
-  let nextEntryAt   = null;
-  let isWriting     = false;
-  let intervalId    = null;
-  let countdownId   = null;
-  let elapsedId     = null;
+  let entries = [], entryCount = 0, sessionStart = null, nextEntryAt = null, isWriting = false;
 
-  // ── DOM REFS ────────────────────────────────────────────────────────────────
-  const webcam          = document.getElementById('webcam');
-  const canvas          = document.getElementById('canvas');
-  const logbook         = document.getElementById('logbook');
-  const emptyState      = document.getElementById('empty-state');
-  const writingIndicator= document.getElementById('writing-indicator');
-  const statusText      = document.getElementById('status-text');
-  const entryCountEl    = document.getElementById('entry-count');
-  const elapsedTimeEl   = document.getElementById('elapsed-time');
-  const countdownFill   = document.getElementById('countdown-fill');
-  const countdownLabel  = document.getElementById('countdown-label');
-  const sessionDateEl   = document.getElementById('session-date');
+  const webcam           = document.getElementById('webcam');
+  const canvas           = document.getElementById('canvas');
+  const logbook          = document.getElementById('logbook');
+  const emptyState       = document.getElementById('empty-state');
+  const writingIndicator = document.getElementById('writing-indicator');
+  const sessionDateEl    = document.getElementById('session-date');
 
-  // ── INIT ────────────────────────────────────────────────────────────────────
   async function init() {
-    // Set session date
-    const now = new Date();
-    sessionDateEl.textContent = now.toLocaleDateString('en-US', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-    }).toUpperCase();
-
+    sessionDateEl.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
       webcam.srcObject = stream;
       await new Promise(r => webcam.onloadedmetadata = r);
-
-      // Camera granted — begin
       emptyState.remove();
       sessionStart = Date.now();
-      setStatus('Active');
-      startElapsedTimer();
-
-      // First entry after a short delay, then on interval
-      setTimeout(() => {
-        captureAndWrite();
-        scheduleNext();
-      }, 3000);
-
+      setTimeout(() => { captureAndWrite(); scheduleNext(); }, 3000);
     } catch (err) {
-      setStatus('Camera access denied');
       emptyState.textContent = 'Camera access was not granted. The record cannot begin.';
     }
   }
 
   function scheduleNext() {
     nextEntryAt = Date.now() + INTERVAL_MS;
-    startCountdown();
-    intervalId = setTimeout(() => {
-      captureAndWrite();
-      scheduleNext();
-    }, INTERVAL_MS);
+    setTimeout(() => { captureAndWrite(); scheduleNext(); }, INTERVAL_MS);
   }
 
-  // ── CAPTURE ─────────────────────────────────────────────────────────────────
   function captureFrame() {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(webcam, 0, 0, canvas.width, canvas.height);
-    // Return base64 without the data URL prefix
     return canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
   }
 
-  // ── PIPELINE ─────────────────────────────────────────────────────────────────
   async function captureAndWrite() {
     if (isWriting) return;
     isWriting = true;
-    showWriting(true);
-    setStatus('Observing...');
-
+    writingIndicator.classList.add('visible');
     try {
       const frame = captureFrame();
-
-      // Step 1: Vision model describes the frame
       const visionRes = await fetch(`${OLLAMA_BASE}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: VISION_MODEL,
-          prompt: 'Describe what you see in this image in 2-4 plain sentences. Focus on the person: their posture, position, what they appear to be doing, the light, and their relationship to the space. Be factual and brief. No interpretation.',
-          images: [frame],
-          stream: false
-        })
+        body: JSON.stringify({ model: VISION_MODEL, prompt: 'Describe what you see in this image in 2-4 plain sentences. Focus on the person: their posture, position, what they appear to be doing, the light, and their relationship to the space. Be factual and brief. No interpretation.', images: [frame], stream: false })
       });
-
       if (!visionRes.ok) throw new Error(`Vision model error: ${visionRes.status}`);
-      const visionData = await visionRes.json();
-      const frameDescription = visionData.response;
-
-      // Step 2: Text model writes the journal entry
+      const frameDescription = (await visionRes.json()).response;
       const textRes = await fetch(`${OLLAMA_BASE}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: TEXT_MODEL,
-          system: SYSTEM_PROMPT,
-          prompt: `Visual observation: ${frameDescription}\n\nWrite one logbook entry based on this observation.`,
-          stream: false,
-          options: {
-            temperature: 0.7,
-            top_p: 0.9,
-          }
-        })
+        body: JSON.stringify({ model: TEXT_MODEL, system: SYSTEM_PROMPT, prompt: `Visual observation: ${frameDescription}\n\nWrite one logbook entry based on this observation.`, stream: false, options: { temperature: 0.7, top_p: 0.9 } })
       });
-
       if (!textRes.ok) throw new Error(`Text model error: ${textRes.status}`);
-      const textData = await textRes.json();
-      const journalEntry = textData.response.trim();
-
-      appendEntry(journalEntry);
-      setStatus('Active');
-
+      appendEntry((await textRes.json()).response.trim());
     } catch (err) {
-      console.error('Pipeline error:', err);
-      setStatus('Error — retrying next cycle');
+      console.error(err);
       appendError(err.message);
     }
-
     isWriting = false;
-    showWriting(false);
+    writingIndicator.classList.remove('visible');
   }
 
-  // ── UI ───────────────────────────────────────────────────────────────────────
   function appendEntry(text) {
     entryCount++;
     const now = new Date();
-    const timestamp = now.toTimeString().slice(0,8);
-    const dateStr   = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase();
-
-    const entry = {
-      timestamp: `${dateStr} — ${timestamp}`,
-      text,
-      index: entryCount
-    };
+    const entry = { timestamp: `${now.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}).toUpperCase()} — ${now.toTimeString().slice(0,8)}`, text, index: entryCount };
     entries.push(entry);
-
-    // Build DOM element
     const el = document.createElement('div');
     el.className = 'entry';
-    el.innerHTML = `
-      <div class="entry-time">${entry.timestamp} &nbsp;/&nbsp; #${String(entryCount).padStart(3,'0')}</div>
-      <div class="entry-text">${text}</div>
-      <div class="entry-divider"></div>
-    `;
+    el.innerHTML = `<div class="entry-time">${entry.timestamp} &nbsp;/&nbsp; #${String(entryCount).padStart(3,'0')}</div><div class="entry-text">${text}</div><div class="entry-divider"></div>`;
     logbook.appendChild(el);
-
-    // Scroll to bottom
     logbook.scrollTop = logbook.scrollHeight;
-
-    // Update counter
-    entryCountEl.textContent = entryCount;
   }
 
   function appendError(msg) {
     const el = document.createElement('div');
-    el.className = 'entry';
-    el.innerHTML = `<div class="error-msg">pipeline error: ${msg}<br>ensure ollama is running and models are loaded.</div>`;
+    el.className = 'error-msg';
+    el.textContent = `pipeline error: ${msg} — ensure ollama is running`;
     logbook.appendChild(el);
     logbook.scrollTop = logbook.scrollHeight;
   }
 
-  function showWriting(show) {
-    writingIndicator.classList.toggle('visible', show);
-  }
-
-  function setStatus(msg) {
-    statusText.textContent = msg;
-  }
-
-  // ── TIMERS ───────────────────────────────────────────────────────────────────
-  function startElapsedTimer() {
-    elapsedId = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
-      const h = Math.floor(elapsed / 3600);
-      const m = Math.floor((elapsed % 3600) / 60);
-      const s = elapsed % 60;
-      elapsedTimeEl.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-    }, 1000);
-  }
-
-  function startCountdown() {
-    if (countdownId) clearInterval(countdownId);
-    countdownId = setInterval(() => {
-      const remaining = Math.max(0, nextEntryAt - Date.now());
-      const pct = ((INTERVAL_MS - remaining) / INTERVAL_MS) * 100;
-      countdownFill.style.width = `${pct}%`;
-      const secs = Math.ceil(remaining / 1000);
-      countdownLabel.textContent = secs > 0 ? `${secs}s` : 'writing...';
-    }, 500);
-  }
-
-  // ── EXPORT ───────────────────────────────────────────────────────────────────
   function exportLog() {
-    if (entries.length === 0) return;
-
-    const header = [
-      'WITNESS — SESSION LOG',
-      `Date: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`,
-      `Entries: ${entries.length}`,
-      `Duration: ${elapsedTimeEl.textContent}`,
-      '─'.repeat(60),
-      ''
-    ].join('\n');
-
-    const body = entries.map(e =>
-      `[${e.timestamp}] #${String(e.index).padStart(3,'0')}\n${e.text}\n`
-    ).join('\n');
-
-    const blob = new Blob([header + body], { type: 'text/plain' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
+    if (!entries.length) return;
+    const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
+    const h = Math.floor(elapsed/3600), m = Math.floor((elapsed%3600)/60), s = elapsed%60;
+    const header = `WITNESS — SESSION LOG\nDate: ${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}\nEntries: ${entries.length}\nDuration: ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}\n${'─'.repeat(60)}\n\n`;
+    const body = entries.map(e => `[${e.timestamp}] #${String(e.index).padStart(3,'0')}\n${e.text}\n`).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([header+body], {type:'text/plain'}));
     a.download = `witness-log-${new Date().toISOString().slice(0,10)}.txt`;
     a.click();
-    URL.revokeObjectURL(url);
   }
 
-  // ── START ────────────────────────────────────────────────────────────────────
   init();
 </script>
 </body>
